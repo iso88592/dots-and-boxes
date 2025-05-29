@@ -15,18 +15,16 @@ import com.github.dockerjava.netty.NettyDockerCmdExecFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.net.NetworkInterface;
 import java.util.*;
 
 @Slf4j
 @Service
 public class OrchestratorServiceImpl implements OrchestratorService {
 
-    //private final String networkName = "dots_and_boxes";
-    private final String networkNameInternal = "dots_and_boxes_bridge";
-    private final String imageName = "game-dab";
+    private final String bridgedNetworkName = "dots_and_boxes_bridge";
+    private final String dockerImageName = "game-dab";
     private final DockerClient dockerClient;
-    private String networkGateway = "";
+    private String applicationHostAddress = "";
 
     public OrchestratorServiceImpl() {
         log.info("Starting OrchestratorServiceImpl");
@@ -41,64 +39,23 @@ public class OrchestratorServiceImpl implements OrchestratorService {
         var result = dockerClient.pingCmd().exec();
         log.info("Ping result: {}", result);
         log.info("Creating network interface");
-/*        String networkInterfaceName = "eth0";
-        try {
-            var ipconfig = new Network.Ipam.Config();
-            try {
-                for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements(); ) {
-                    NetworkInterface intf = en.nextElement();
-                    if (intf.isLoopback()) continue;
-                    if (!intf.isUp()) continue;
-                    var addresses = intf.getInetAddresses();
-                    while (addresses.hasMoreElements()) {
-                        var ip = addresses.nextElement();
-                        if (ip.isLoopbackAddress()) continue;
-                        if (ip.isLinkLocalAddress()) continue;
-                        if (ip.getHostAddress().contains(":")) continue;
-                        log.info("Found network interface: {}", ip.getHostAddress());
-                        networkInterfaceName = intf.getDisplayName();
-                        log.info("Network display name: {}", networkInterfaceName);
-
-                        byte[] addr = ip.getAddress();
-                        log.info("%d.%d.%d.1".formatted(addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF));
-                        log.info("%d.%d.%d.0/24".formatted(addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF));
-                        log.info("%d.%d.%d.128/25".formatted(addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF));
-                        ipconfig = ipconfig
-                                .withGateway("%d.%d.%d.1".formatted(addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF))
-                                .withSubnet("%d.%d.%d.0/24".formatted(addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF))
-                                .withIpRange("%d.%d.%d.128/25".formatted(addr[0] & 0xFF, addr[1] & 0xFF, addr[2] & 0xFF));
-                    }
-                }
-
-            } catch (Exception e) {
-                log.info(e.getLocalizedMessage());
-            }
-            dockerClient.createNetworkCmd()
-                    .withName(networkName)
-                    .withIpam(new Network.Ipam().withConfig(ipconfig))
-                    .withOptions(Map.of("parent", networkInterfaceName))
-                    .withDriver("ipvlan")
-                    .exec();
-        } catch (ConflictException e) {
-            log.info(e.getMessage());
-        }*/
         try {
             dockerClient.createNetworkCmd()
-                    .withName(networkNameInternal)
+                    .withName(bridgedNetworkName)
                     .withDriver("bridge")
                     .exec();
         } catch (ConflictException e) {
             log.info(e.getMessage());
         }
-        networkGateway = dockerClient.listNetworksCmd().withNameFilter(networkNameInternal).exec().get(0).getIpam().getConfig().get(0).getGateway();
-        log.info("Network gateway: {} -> {}", networkNameInternal,  networkGateway);
+        applicationHostAddress = dockerClient.listNetworksCmd().withNameFilter(bridgedNetworkName).exec().get(0).getIpam().getConfig().get(0).getGateway();
+        log.info("Network gateway: {} -> {}", bridgedNetworkName, applicationHostAddress);
     }
 
     @Override
     public void clearAllContainers() {
         Network network = dockerClient
                 .listNetworksCmd()
-                .withNameFilter(networkNameInternal)
+                .withNameFilter(bridgedNetworkName)
                 .exec()
                 .stream().findFirst().get();
         List<Container> runningContainers = dockerClient
@@ -168,19 +125,13 @@ public class OrchestratorServiceImpl implements OrchestratorService {
         try {
 
             CreateContainerResponse container = dockerClient
-                    .createContainerCmd(imageName)
-                    .withNetworkMode(networkNameInternal)
-                    .withEnv("SERVERHOST=http://" + networkGateway + ":8080/dab")
+                    .createContainerCmd(dockerImageName)
+                    .withNetworkMode(bridgedNetworkName)
+                    .withEnv("SERVERHOST=http://" + applicationHostAddress + ":8080/dab")
                     .withCmd("sh", "-c", "while true; do echo 'here'; sleep 2; done")
                     .exec();
 
             dockerClient.startContainerCmd(container.getId()).exec();
-/*
-            dockerClient.connectToNetworkCmd()
-                    .withContainerId(container.getId())
-                    .withNetworkId(networkNameInternal)
-                    .exec();
-*/
 
             String[] cmdSetupSSH = {
                     "sh", "-c",
@@ -190,7 +141,7 @@ public class OrchestratorServiceImpl implements OrchestratorService {
             };
 
             execInContainer(container.getId(), cmdSetupSSH, false);
-            execInContainer(container.getId(), new String[]{"sh", "-c", "echo 'export SERVERHOST=http://"+networkGateway+":8080/dab' >> ~/.ssh/environment"}, false);
+            execInContainer(container.getId(), new String[]{"sh", "-c", "echo 'export SERVERHOST=http://"+ applicationHostAddress +":8080/dab' >> ~/.ssh/environment"}, false);
 
             String[] cmdInitGit = {
                     "sh", "-c",
