@@ -1,0 +1,16 @@
+#!/bin/bash
+source /root/.ssh/environment
+
+pkill dotnet
+
+TARGET_DIR="/docker/InitialRepo"
+
+rm -rf "$TARGET_DIR"
+mkdir -p "$TARGET_DIR"
+
+BARE_REPO_DIR="$(pwd)"
+
+git --work-tree="$TARGET_DIR" --git-dir="/root/dots-and-boxes.git" checkout -f main
+
+cd /dab
+dotnet run &

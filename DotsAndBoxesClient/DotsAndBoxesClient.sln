@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotsAndBoxesClient", "DotsAndBoxesClient\DotsAndBoxesClient.csproj", "{4E15C0EA-3275-4254-B578-5577A61D1EBC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotsAndBoxesLib", "..\docker\InitialRepo\DotsAndBoxes\DotsAndBoxesLib\DotsAndBoxesLib.csproj", "{F6FAD151-2C04-448A-A490-462CC76211F4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E15C0EA-3275-4254-B578-5577A61D1EBC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E15C0EA-3275-4254-B578-5577A61D1EBC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E15C0EA-3275-4254-B578-5577A61D1EBC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E15C0EA-3275-4254-B578-5577A61D1EBC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F6FAD151-2C04-448A-A490-462CC76211F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F6FAD151-2C04-448A-A490-462CC76211F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F6FAD151-2C04-448A-A490-462CC76211F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F6FAD151-2C04-448A-A490-462CC76211F4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

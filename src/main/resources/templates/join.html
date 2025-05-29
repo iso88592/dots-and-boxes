@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Join Dots and Boxes</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}"/>
+    <style>
+        body{
+            background-color: rgba(255,255,255,0.8);
+            background-image: url("https://media.tenor.com/FYsjyvi3C7kAAAAi/rupert-cat.gif");
+            background-size: contain;
+            background-blend-mode:difference;
+        }
+    </style>
+</head>
+<body>
+<script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.min.js}"></script>
+<main class="container">
+    <div class="row">
+        <section class="col-12">
+            <h1 class="text-center">Dots and Boxes</h1>
+        </section>
+        <section class="col-12" th:if="${container==null}">
+            <h2>Creating something great</h2>
+            <p>
+                You are now entering a land where the magic happens. Note, that <strong>none</strong> of your code will
+                be used for training AI. This environment is yours alone. This is ephemeral. This repo will be available
+                until the game lasts. When your design container stops, all your work will be gone. Forever. You can
+                still keep your local repository and use it as-is, wherever you'd like to.
+            </p>
+            <p>
+                Here is what you'll need to progress:
+            </p>
+            <div class="ms-4">
+                <details>
+                    <summary>Access to my container network</summary>
+                    <p class="ms-4 mt-4">If you can read this from your own machine, congrats - you've breached the
+                        firewall and made it inside. You're in.</p>
+                </details>
+                <details>
+                    <summary>A working ssh command</summary>
+                    <p class="ms-4 mt-4">You likely already have SSH installed. Go on, fire up a terminal and check
+                    your <code>ssh</code> command!</p>
+                </details>
+                <details>
+                    <summary>A working SSH private-public key pair</summary>
+                    <p class="ms-4 mt-4">Now this is the hard part. First of all, check your home directory for a hidden
+                        directory called <code>.ssh</code> and if you see a file ending with <strong>.pub</strong>,
+                        you're most likely good to go. Remember this file because you'll need it down below.</p>
+                    <p class="ms-4 mt-4">If you don't have an SSH key pair, you need to generate one. Try this:
+                        <code>ssh-keygen -t ecdsa -b 521</code>
+                    </p>
+                </details>
+                <details>
+                    <summary>A working git command</summary>
+                    <p class="ms-4 mt-4">
+                        If you are using Windows, or you just like to download random stuff from the internet,
+                        <a href="https://git-scm.com/downloads" target="_blank">git</a> yourself a version control
+                        system!
+                    </p>
+                    <p class="ms-4">
+                        If you are using a package manager, consult it for installing the package <code>git</code>
+                    </p>
+                </details>
+                <details>
+                    <summary>An IDE of some kind to make C# code</summary>
+                    <p class="ms-4 mt-4">
+                        <a href="https://code.visualstudio.com/download" target="_blank">VS Code</a> is fine for this
+                        task, but you can also use <a href="https://www.jetbrains.com/rider/" target="_blank">Rider</a>
+                        or <a href="https://visualstudio.microsoft.com/" target="_blank">Visual Studio</a> if you must.
+                        Or you can just go <a href="https://neovim.io" target="_blank">neo<strong>vim</strong></a>.
+                    </p>
+                    <p class="ms-4">
+                        Optionally you can get a local version of
+                        <a href="https://dotnet.microsoft.com/en-us/download/dotnet/9.0" target="_blank">.net core 9.0
+                        </a>
+                        working on your machine. All compilation will go through the system, but you can still use a
+                        local version for testing your changes before submitting.
+                    </p>
+                </details>
+                <p>
+                    Once you’ve checked all the boxes (in your head, because I'm not that good in html to make
+                    checkboxes, duh!), scroll down and submit your stuff like the hacker you are.
+                </p>
+            </div>
+            <hr>
+            <h2>Your PUBLIC SSH key</h2>
+            Currently, you can only add one public key per host. <em>// TODO</em>
+            <form th:action="@{/join}" method="post">
+                <div class="bd-example">
+                    <div class="mb-3">
+                        <label for="ssh-key" class="form-label">Your public SSH key</label>
+                        <textarea class="form-control" id="ssh-key" rows="3"
+                                  name="ssh-key"
+                                  required
+                                  placeholder="Paste here your public key starting with ssh-xxxx AAAAA... user@host"></textarea>
+                        <button type="submit" class="form-control btn btn-primary">You've got the dots. Now connect them!</button>
+                    </div>
+                </div>
+                <p>
+                    By submitting your public SSH key, you are consenting to have fun.
+                </p>
+                <p class="text-center">
+                    <strong>Never</strong> share your private key, especially not over untrusted networks. Especially
+                    not over HTTP. You have been warned!
+                </p>
+            </form>
+            <script>
+                const sshKeyRegex = /^(ssh-(rsa|ed25519|dss)|ecdsa-sha2-nistp(?:256|384|521)) ([A-Za-z0-9+/=]+) (.*@.*)$/;
+
+                function isValidSshPublicKey(input) {
+                    return sshKeyRegex.test(input.trim());
+                }
+
+                const keyField = document.getElementById("ssh-key");
+                keyField.addEventListener("input", (event) => {
+                    keyField.setCustomValidity("");
+                    if (!keyField.validity.valid) {
+                        return;
+                    }
+                    if (!isValidSshPublicKey(keyField.value)) {
+                        keyField.setCustomValidity("Not a valid SSH public key!");
+                    }
+                });
+            </script>
+        </section>
+        <section class="col-12" th:if="${container != null}">
+            <h2>Way to go!</h2>
+            Now you just need to clone this repository:
+            <div class="card">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <code id="clone-command" class="text-break">
+                        git clone ssh://root@<span th:text="${container}"></span>:/root/dots-and-boxes.git
+                        ./dots-and-boxes
+                    </code>
+                    <button class="btn btn-outline-primary ms-3" onclick="copyCloneCommand()">Copy</button>
+                </div>
+            </div>
+            <p>
+                You can also send this command to your teammates!
+            </p>
+            <p>
+                If you have finished, you can <a th:href="@{/}">go back</a> to the dashboard.
+            </p>
+
+
+            <script>
+                function copyCloneCommand() {
+                    const el = document.getElementById('clone-command');
+                    navigator.clipboard.writeText(el.innerText);
+                }
+            </script>
+
+        </section>
+    </div>
+</main>
+</body>
+</html>

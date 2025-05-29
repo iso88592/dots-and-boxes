@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout}">
+<head>
+    <meta charset="UTF-8">
+    <title>Dots and Boxes</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}"/>
+</head>
+<body>
+<main class="container">
+    <div class="row">
+        <section class="col-12">
+            <h1 class="text-center">Dots and Boxes</h1>
+        </section>
+        <section class="col-9" id="game-state">
+            <h2>Game state</h2>
+        </section>
+        <section class="col-3" id="participants">
+            <h2>Participants</h2>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Id</th>
+                        <th>Names</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:if="${clients.size() == 0}">
+                        <td colspan="3" class="text-center">There are no participants yet.</td>
+                    </tr>
+                    <tr th:if="${clients.size() > 0}" th:each="client: ${clients}">
+                        <td th:text="${client.getId() + ' ' + client.getPublicAddress()}"></td>
+                        <td th:text="${client.getNames()}"></td>
+                        <td th:text="${client.getScore()}"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="text-center">Wanna join? Click <a class="" th:href="@{/join}">here!</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </div>
+</main>
+<script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.min.js}"></script>
+</body>
+</html>
