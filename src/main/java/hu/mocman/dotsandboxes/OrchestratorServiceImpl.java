@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -26,6 +27,7 @@ public class OrchestratorServiceImpl implements OrchestratorService {
     private String applicationHostAddress = "";
 
     public OrchestratorServiceImpl() {
+        
         log.info("Starting OrchestratorServiceImpl");
         NettyDockerCmdExecFactory factory = new NettyDockerCmdExecFactory();
         DockerClientConfig custom = DefaultDockerClientConfig.createDefaultConfigBuilder()
@@ -37,17 +39,37 @@ public class OrchestratorServiceImpl implements OrchestratorService {
                 .build();
         var result = dockerClient.pingCmd().exec();
         log.info("Ping result: {}", result);
-        log.info("Creating network interface");
-        try {
+
+        
+        
+        log.info("Setting up network interface");
+        Optional<Network> existingNetwork = extractBridgedNetwork();
+
+        if (existingNetwork.isEmpty()) {
+            log.info("Creating new network interface");
             dockerClient.createNetworkCmd()
                     .withName(bridgedNetworkName)
                     .withDriver("bridge")
                     .exec();
-        } catch (ConflictException e) {
-            log.info(e.getMessage());
+            existingNetwork = extractBridgedNetwork();
+        } else {
+            log.info("Using existing network interface");
         }
-        applicationHostAddress = dockerClient.listNetworksCmd().withNameFilter(bridgedNetworkName).exec().get(0).getIpam().getConfig().get(0).getGateway();
+
+        applicationHostAddress = existingNetwork.orElseThrow(() -> new ConflictException("Unable to create bridged network"))
+                .getIpam()
+                .getConfig()
+                .get(0)
+                .getGateway();
         log.info("Network gateway: {} -> {}", bridgedNetworkName, applicationHostAddress);
+    }
+
+    private Optional<Network> extractBridgedNetwork() {
+        return dockerClient.listNetworksCmd()
+                .withNameFilter(bridgedNetworkName)
+                .exec()
+                .stream()
+                .findFirst();
     }
 
     @Override
