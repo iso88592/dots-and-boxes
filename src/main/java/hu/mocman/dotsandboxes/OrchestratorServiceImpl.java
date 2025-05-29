@@ -3,7 +3,6 @@ package hu.mocman.dotsandboxes;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.command.ExecCreateCmdResponse;
-import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.exception.ConflictException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Network;
@@ -100,6 +99,10 @@ public class OrchestratorServiceImpl implements OrchestratorService {
         }
     }
 
+    private void execInContainer(String containerId, String command, boolean detach) throws Exception {
+        execInContainer(containerId, new String[]{"sh", "-c", command}, detach);
+    }
+
     private boolean isValidSshKey(String key) {
         if (key == null) return false;
         key = key.trim();
@@ -133,33 +136,19 @@ public class OrchestratorServiceImpl implements OrchestratorService {
 
             dockerClient.startContainerCmd(container.getId()).exec();
 
-            String[] cmdSetupSSH = {
-                    "sh", "-c",
-                    "mkdir -p /root/.ssh && " +
-                            "echo '" + sshKey.replace("'", "'\"'\"'") + "' >> /root/.ssh/authorized_keys && " +
-                            "chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys"
-            };
+            execInContainer(container.getId(), "mkdir -p /root/.ssh && echo '%s' >> /root/.ssh/authorized_keys && chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys".formatted(sshKey.replace("'", "'\"'\"'")), false);
 
-            execInContainer(container.getId(), cmdSetupSSH, false);
-            execInContainer(container.getId(), new String[]{"sh", "-c", "echo 'export SERVERHOST=http://"+ applicationHostAddress +":8080/dab' >> ~/.ssh/environment"}, false);
+            execInContainer(container.getId(), "echo 'export SERVERHOST=http://%s:8080/dab' >> ~/.ssh/environment".formatted(applicationHostAddress), false);
 
-            String[] cmdInitGit = {
-                    "sh", "-c",
-                    "git init -b main --bare /root/dots-and-boxes.git"
-            };
+            execInContainer(container.getId(), "git init -b main --bare /root/dots-and-boxes.git", false);
 
-            execInContainer(container.getId(), cmdInitGit, false);
+            execInContainer(container.getId(), "mv /docker/InitialRepo/post-update /root/dots-and-boxes.git/hooks/ && chmod +x /root/dots-and-boxes.git/hooks/post-update", false);
 
-            execInContainer(container.getId(), new String[]{"sh", "-c", "mv /docker/InitialRepo/post-update /root/dots-and-boxes.git/hooks/ && chmod +x /root/dots-and-boxes.git/hooks/post-update"}, false);
+            execInContainer(container.getId(), "service ssh start", false);
 
+            execInContainer(container.getId(), "echo '%s' > /myname.is".formatted(dockerClient.inspectContainerCmd(container.getId()).exec().getName().substring(1)), false);
 
-            execInContainer(container.getId(), new String[]{"sh", "-c", "service ssh start"}, false);
-
-            InspectContainerResponse response = dockerClient.inspectContainerCmd(container.getId()).exec();
-
-            execInContainer(container.getId(), new String[]{"sh", "-c", "echo '" + response.getName().substring(1) + "' > /myname.is"}, false);
-
-            execInContainer(container.getId(), new String[]{"sh", "-c", "git clone file:///root/dots-and-boxes.git /dab-repo && cd /dab-repo && git config --global user.name \"Sir Git-A-Lot\" && git config --global user.email \"git@your.mom\" && cp -r /docker/InitialRepo/DotsAndBoxes . && git add . && git commit -m 'Initial commit' && git push origin main && cd && rm -rf /dab-repo"}, true);
+            execInContainer(container.getId(), "git clone file:///root/dots-and-boxes.git /dab-repo && cd /dab-repo && git config --global user.name \"Sir Git-A-Lot\" && git config --global user.email \"git@your.mom\" && cp -r /docker/InitialRepo/DotsAndBoxes . && git add . && git commit -m 'Initial commit' && git push origin main && cd && rm -rf /dab-repo", true);
 
             return container.getId();
         } catch (Exception e) {
