@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.Optional;
+import java.net.NetworkInterface;
+import java.net.InetAddress;
 
 @Slf4j
 @Service
@@ -40,8 +42,6 @@ public class OrchestratorServiceImpl implements OrchestratorService {
         var result = dockerClient.pingCmd().exec();
         log.info("Ping result: {}", result);
 
-        
-        
         log.info("Setting up network interface");
         Optional<Network> existingNetwork = extractBridgedNetwork();
 
@@ -62,6 +62,35 @@ public class OrchestratorServiceImpl implements OrchestratorService {
                 .get(0)
                 .getGateway();
         log.info("Network gateway: {} -> {}", bridgedNetworkName, applicationHostAddress);
+
+        try {
+            NetworkInterface networkInterface = findInterfaceByIp(applicationHostAddress);
+            if (networkInterface != null) {
+                log.info("Found network interface: {} for IP: {}. Please make sure that a route exists for the network and run routing.sh as root!", networkInterface.getDisplayName(), applicationHostAddress);
+            }
+        } catch (Exception e) {
+            log.error("Error finding network interface: {}", e.getMessage());
+        }
+
+    }
+
+
+    private NetworkInterface findInterfaceByIp(String ipAddress) throws Exception {
+        InetAddress targetAddress = InetAddress.getByName(ipAddress);
+        Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
+
+        while (networkInterfaces.hasMoreElements()) {
+            NetworkInterface networkInterface = networkInterfaces.nextElement();
+            Enumeration<InetAddress> inetAddresses = networkInterface.getInetAddresses();
+
+            while (inetAddresses.hasMoreElements()) {
+                InetAddress address = inetAddresses.nextElement();
+                if (address.equals(targetAddress)) {
+                    return networkInterface;
+                }
+            }
+        }
+        return null;
     }
 
     private Optional<Network> extractBridgedNetwork() {
