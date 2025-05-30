@@ -1,5 +1,8 @@
 using System.Net;
+using System.Text.Json;
+using DotsAndBoxesClient;
 using DotsAndBoxesLib;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -49,14 +52,19 @@ for (int i = 0; i < loadedAssemblies.Length; i++)
     builder.Services.Register(loadedAssemblies[i]);
 }
 
+JsonSerializerOptions options = new()
+{
+    Converters = { new Int2DArrayConverter() }
+};
+
+
 IDotsAndBoxes dotsAndBoxes = DotsAndBoxesFactory.GetInstance();
-
-GameState state = new GameState();
-
-app.MapGet("/turn", () =>
+    app.MapGet("/turn", ([FromQuery] string state) =>
     {
-        state = dotsAndBoxes.Turn(state);
-        return state;
+        Console.WriteLine("Received state: {0}", state);
+        var givenState = JsonSerializer.Deserialize<GameState>(state, options);
+        var result = dotsAndBoxes.Turn(givenState);
+        return JsonSerializer.Serialize(result, options);
     })
     .WithName("Turn");
 

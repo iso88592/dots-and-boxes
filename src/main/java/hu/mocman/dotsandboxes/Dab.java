@@ -11,14 +11,18 @@ import org.springframework.web.bind.annotation.RestController;
 public class Dab {
 
     private final ClientService clientService;
+    private final TournamentService tournamentService;
 
-    public Dab(ClientService clientService) {
+    public Dab(ClientService clientService, TournamentService tournamentService) {
         this.clientService = clientService;
+        this.tournamentService = tournamentService;
     }
     @GetMapping("/dab/hello")
     public String register(HttpServletRequest request, @RequestParam String id) {
-//        log.info("Registering client from {}" , request.getRemoteAddr());
         clientService.register(request, id);
+        log.info("Client updated. Starting tournament.");
+        tournamentService.startTournament(clientService.getClients());
+
         return "{\"result\": \"ok\"}";
     }
 }

@@ -5,6 +5,55 @@
     <meta charset="UTF-8">
     <title>Dots and Boxes</title>
     <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/dist/css/bootstrap.min.css}"/>
+    <style>
+        .game-row {
+            display: block;
+            padding:0;
+            margin:0;
+        }
+        .game-cell {
+            text-align: center;
+            padding:0;
+            margin:0;
+            display:inline-block;
+            width: 40px;
+            height: 40px;
+            border: 1px solid gray;
+            background-color: lightgray;
+        }
+        .game-cell.border-l0 {
+            border-left: 1px solid red;
+        }
+        .game-cell.border-l1 {
+            border-left: 1px solid green;
+        }
+        .game-cell.border-t0 {
+            border-top: 1px solid red;
+        }
+        .game-cell.border-t1 {
+            border-top: 1px solid green;
+        }
+        .game-cell.border-r0 {
+            border-right: 1px solid red;
+        }
+        .game-cell.border-r1 {
+            border-right: 1px solid green;
+        }
+        .game-cell.border-b0 {
+            border-bottom: 1px solid red;
+        }
+        .game-cell.border-b1 {
+            border-bottom: 1px solid green;
+        }
+        .game-cell.fill-0 {
+            background-color: red;
+            color: white;
+        }
+        .game-cell.fill-1 {
+            background-color: green;
+            color: white;
+        }
+    </style>
 </head>
 <body>
 <main class="container">
@@ -14,6 +63,10 @@
         </section>
         <section class="col-9" id="game-state">
             <h2>Game state</h2>
+            <div id="arena" th:if="${gameState != null}" th:utext="${gameState.toHtml()}"></div>
+            <div id="arena" th:if="${gameState == null}">
+                <h3>Game is not started yet</h3>
+            </div>
         </section>
         <section class="col-3" id="participants">
             <h2>Participants</h2>
@@ -51,8 +104,10 @@
         const doc = parser.parseFromString(data, 'text/html');
         const participants = document.getElementById('participants');
         participants.innerHTML = doc.getElementById('participants').innerHTML;
+        const arena = document.getElementById('arena');
+        arena.innerHTML = doc.getElementById('arena').innerHTML;
     }
-    setInterval(updateClientList, 1000);
+    setInterval(updateClientList, 300);
 </script>
 </body>
 </html>

@@ -5,36 +5,44 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.util.Tuple;
 
 import java.util.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 @Slf4j
 @Service
 public class TournamentServiceImpl implements TournamentService {
 
-    private final ClientService clientService;
-    private final Queue<Tuple<Client, Client>> roundPairs = new LinkedList<>();
-    private boolean tournamentActive = false;
+    private final BlockingQueue<Tuple<Client, Client>> roundPairs = new LinkedBlockingQueue<>();
     private Thread processingThread;
     private final List<TournamentEventListener> eventListeners = new ArrayList<>();
+    private GameState latestGameState;
 
-    public TournamentServiceImpl(ClientService clientService) {
-        this.clientService = clientService;
+    public TournamentServiceImpl() {
+        log.info("Starting TournamentServiceImpl");
         initProcessingThread();
-    }
-
-    @Override
-    public void startTournament() {
-        tournamentActive = true;
-        createPairs();
+        log.info("TournamentServiceImpl initialized");
         processingThread.start();
     }
 
-    private void createPairs() {
-        List<Client> clients = clientService.getClients();
+    @Override
+    public void startTournament(List<Client> clients) {
+        createPairs(clients);
+    }
+
+    @Override
+    public GameState getLatestGameState() {
+        return latestGameState;
+    }
+
+    private void createPairs(List<Client> clients) {
         for (int i = 0; i < clients.size(); i++) {
             for (int j = 0; j < clients.size(); j++) {
                 if (i == j) continue;
+                if (!clients.get(i).ready) continue;
+                if (!clients.get(j).ready) continue;
                 if (roundPairs.contains(new Tuple<>(clients.get(i), clients.get(j)))) continue;
                 if (roundPairs.contains(new Tuple<>(clients.get(j), clients.get(i)))) continue;
+                log.info("Adding pair {} and {}", clients.get(i), clients.get(j));
                 roundPairs.add(new Tuple<>(clients.get(i), clients.get(j)));
             }
         }
@@ -43,27 +51,20 @@ public class TournamentServiceImpl implements TournamentService {
 
     private void initProcessingThread() {
         processingThread = new Thread(() -> {
-            while (tournamentActive) {
+            while (true) {
                 try {
                     synchronized (roundPairs) {
-                        while (roundPairs.isEmpty()) {
-                            roundPairs.wait();
-                        }
-                        Tuple<Client, Client> pair = roundPairs.poll();
+                        Tuple<Client, Client> pair = roundPairs.take();
                         for (TournamentEventListener listener : eventListeners) {
                             listener.onPairPopped(pair);
                         }
-                        process(pair);
+                        try {
+                            process(pair);
+                        } catch (Exception e) {
+                            log.info("Failed to process pair {}", pair, e);
+                        }
                         for (TournamentEventListener listener : eventListeners) {
                             listener.onPairProcessed(pair);
-                        }
-                        if (roundPairs.isEmpty()) {
-                            roundPairs.notifyAll();
-                        } else {
-                            roundPairs.wait();
-                        }
-                        if (roundPairs.isEmpty()) {
-
                         }
                     }
                 } catch (InterruptedException e) {
@@ -81,32 +82,66 @@ public class TournamentServiceImpl implements TournamentService {
     }
 
     private void process(Tuple<Client, Client> contestants) {
+        log.info("Processing pair {}", contestants);
         boolean isRedTurn = true;
 
         Client[] clients = new Client[2];
+        int scores[] = {0,0};
 
-        for (int boardSize = 5; boardSize <= 11; boardSize += 2) {
+        for (int boardSize = 3; boardSize <= 11; boardSize += 4) {
             for (int rounds = 0; rounds < 3; rounds++) {
+                int p1idx = 0;
+                int p2idx = 1;
                 if (coinFlip()) {
                     clients[0] = contestants._1();
                     clients[1] = contestants._2();
                 } else {
                     clients[0] = contestants._2();
                     clients[1] = contestants._1();
+                    p1idx = 1;
+                    p2idx = 0;
                 }
 
                 GameState gameState = GameState.NewGame(boardSize);
+                int[] strokes = {0,0};
 
-                while (!gameState.gameOver()) {
+                while (!gameState.isGameOver()) {
                     Client currentPlayer = isRedTurn ? clients[0] : clients[1];
                     GameState newState = currentPlayer.turn(gameState.clone());
-                    if (newState.isValidMove(gameState)) {
+                    if (gameState.isValidMove(newState)) {
                         gameState = newState;
+                        if (!gameState.fill()) {
+                            gameState.nextPlayer();
+                        }
+                        latestGameState = gameState;
                         isRedTurn = !isRedTurn;
+                    } else {
+                        strokes[isRedTurn ? 0 : 1]++;
+                        log.info("Invalid move for {}: {}", currentPlayer, gameState);
+                        if (strokes[isRedTurn ? 0 : 1] >= 3) {
+                            log.info("Player {} has failed to make a valid move in 3 rounds", currentPlayer);
+                            scores[isRedTurn ? 1 : 0]++;
+                            scores[isRedTurn ? 0 : 1]--;
+                            break;
+                        }
+                    }
+                }
+                if (gameState.isGameOver()) {
+                    int p1 = gameState.countScores(0);
+                    int p2 = gameState.countScores(1);
+                    if (p1 > p2) {
+                        scores[p1idx]++;
+                    } else {
+                        scores[p2idx]++;
                     }
                 }
             }
         }
+        if (scores[0] == 9) scores[0]++;
+        if (scores[1] == 9) scores[1]++;
+        clients[0].setScore(scores[0], clients[1].getId());
+        clients[1].setScore(scores[1], clients[0].getId());
+        log.info("Pair processed. The score is {}:{} ({}:{})", scores[0], scores[1], clients[0].getId(), clients[1].getId());
     }
 
     

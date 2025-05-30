@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace DotsAndBoxesLib;
 
 public class GameState
@@ -22,10 +24,19 @@ public class GameState
         return gameState;
     }
 
+    public GameState()
+    {
+    }
+
+
+    [JsonPropertyName("width")]
     public int Width { get; set; }
+    [JsonPropertyName("height")]
     public int Height { get; set; }
+    [JsonPropertyName("currentPlayerIndex")]
     public int CurrentPlayerIndex { get; set; }
 
+    [JsonPropertyName("level")]
     public int[,] Level { get; set; }
 
     public enum Edge
@@ -34,7 +45,7 @@ public class GameState
         Right,
         Top,
         Bottom,
-        Ceter
+        Center
     }
 
     public void SetEdge(int x, int y, Edge edge)
@@ -78,7 +89,7 @@ public class GameState
                 if (i % 2 + j % 2 == 0) continue;
                 if (i % 2 + j % 2 == 2)
                 {
-                    if (Level[i,j] != newState.Level[i, j]) return false;
+                    if (Level[i, j] != newState.Level[i, j]) return false;
                 }
 
                 if (i % 2 + j % 2 == 1)
@@ -128,17 +139,18 @@ public class GameState
                 result |= FillAt(i, j);
             }
         }
+
         return result;
     }
-    
+
     private bool FillAt(int x, int y)
     {
-        if (GetEdge(x,y, Edge.Ceter) != -1) return false;
+        if (GetEdge(x, y, Edge.Center) != -1) return false;
         if (GetEdge(x, y, Edge.Left) == -1) return false;
         if (GetEdge(x, y, Edge.Top) == -1) return false;
         if (GetEdge(x, y, Edge.Right) == -1) return false;
         if (GetEdge(x, y, Edge.Bottom) == -1) return false;
-        SetEdge(x,y, Edge.Ceter);
+        SetEdge(x, y, Edge.Center);
         return true;
     }
 
@@ -171,7 +183,7 @@ public class GameState
             {
                 if (i % 2 + j % 2 == 2) result += F(Level[i, j]);
                 if (i % 2 + j % 2 == 1) result += E(Level[i, j], i % 2 == 0);
-                if (i % 2 + j % 2 == 0) result += M(i,j);
+                if (i % 2 + j % 2 == 0) result += M(i, j);
             }
 
             result += "\n";
@@ -213,7 +225,7 @@ public class GameState
         if (x == Width * 2 && y == 0) return "\u2510";
         if (x == Width * 2 && y == Height * 2) return "\u2518";
         if (x == Width * 2) return "\u2524";
-        if (y == 0)  return "\u252C";
+        if (y == 0) return "\u252C";
         if (y == Height * 2) return "\u2534";
         return "\u253C";
     }
