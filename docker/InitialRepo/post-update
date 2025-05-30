@@ -13,4 +13,6 @@ BARE_REPO_DIR="$(pwd)"
 git --work-tree="$TARGET_DIR" --git-dir="/root/dots-and-boxes.git" checkout -f main
 
 cd /dab
-dotnet run &
+nohup dotnet run > /tmp/dotnet_app.log 2>&1 &
+
+exit 0

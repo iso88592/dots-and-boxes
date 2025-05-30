@@ -35,7 +35,7 @@
                         <td th:text="${client.getScore()}"></td>
                     </tr>
                     <tr>
-                        <td colspan="3" class="text-center">Wanna join? Click <a class="" th:href="@{/join}">here!</a></td>
+                        <td colspan="3" class="text-center">Wanna join? Click <a id="join" class="" th:href="@{/join}">here!</a></td>
                     </tr>
                 </tbody>
             </table>
@@ -43,5 +43,16 @@
     </div>
 </main>
 <script th:src="@{/webjars/bootstrap/5.3.3/dist/js/bootstrap.min.js}"></script>
+<script>
+    async function updateClientList() {
+        const response = await fetch('/');
+        const data = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(data, 'text/html');
+        const participants = document.getElementById('participants');
+        participants.innerHTML = doc.getElementById('participants').innerHTML;
+    }
+    setInterval(updateClientList, 1000);
+</script>
 </body>
 </html>
