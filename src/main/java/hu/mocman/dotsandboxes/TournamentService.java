@@ -11,6 +11,10 @@ public interface TournamentService {
 
     GameState getLatestGameState();
 
+    byte[] getGif(String id);
+
+    List<String> getGifs();
+
     interface TournamentEventListener {
         void onPairPopped(Tuple<Client, Client> pair);
 

@@ -28,6 +28,7 @@ public class Dashboard {
     public String dashboard(Model model) {
         model.addAttribute("clients", clientService.getClients());
         model.addAttribute("gameState", tournamentService.getLatestGameState());
+        model.addAttribute("gifs", tournamentService.getGifs().reversed());
         return "dashboard";
     }
 

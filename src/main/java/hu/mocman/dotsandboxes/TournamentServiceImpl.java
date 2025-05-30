@@ -34,6 +34,26 @@ public class TournamentServiceImpl implements TournamentService {
         return latestGameState;
     }
 
+    @Override
+    public byte[] getGif(String id) {
+        for (GameGif gif : gifs) {
+            if (gif.id.equals(id)) {
+                return gif.gifData;
+            }
+        }
+        return null;
+
+    }
+
+    @Override
+    public List<String> getGifs() {
+        List<String> result = new ArrayList<>();
+        for (GameGif gif : gifs) {
+            result.add(gif.id);
+        }
+        return result;
+    }
+
     private void createPairs(List<Client> clients) {
         for (int i = 0; i < clients.size(); i++) {
             for (int j = 0; j < clients.size(); j++) {
@@ -104,6 +124,7 @@ public class TournamentServiceImpl implements TournamentService {
 
                 GameState gameState = GameState.NewGame(boardSize);
                 int[] strokes = {0,0};
+                startGame(clients[0], clients[1], boardSize, rounds+1);
 
                 while (!gameState.isGameOver()) {
                     Client currentPlayer = isRedTurn ? clients[0] : clients[1];
@@ -113,15 +134,15 @@ public class TournamentServiceImpl implements TournamentService {
                         if (!gameState.fill()) {
                             gameState.nextPlayer();
                         }
-                        latestGameState = gameState;
+                        snapshot(gameState);
                         isRedTurn = !isRedTurn;
                     } else {
                         strokes[isRedTurn ? 0 : 1]++;
                         log.info("Invalid move for {}: {}", currentPlayer, gameState);
                         if (strokes[isRedTurn ? 0 : 1] >= 3) {
                             log.info("Player {} has failed to make a valid move in 3 rounds", currentPlayer);
-                            scores[isRedTurn ? 1 : 0]++;
-                            scores[isRedTurn ? 0 : 1]--;
+                            scores[isRedTurn ? p2idx : p1idx]++;
+                            scores[isRedTurn ? p1idx : p2idx]--;
                             break;
                         }
                     }
@@ -134,7 +155,10 @@ public class TournamentServiceImpl implements TournamentService {
                     } else {
                         scores[p2idx]++;
                     }
+                } else{
+                    // do not update scores?
                 }
+                finalizeGame();
             }
         }
         if (scores[0] == 9) scores[0]++;
@@ -144,6 +168,24 @@ public class TournamentServiceImpl implements TournamentService {
         log.info("Pair processed. The score is {}:{} ({}:{})", scores[0], scores[1], clients[0].getId(), clients[1].getId());
     }
 
-    
+    private void finalizeGame() {
+        currentGif.finalizeGif();
+        gifs.add(currentGif);
+        if (gifs.size() > 12) {
+            gifs.remove(0);
+        }
+        currentGif = null;
+    }
 
+    private void snapshot(GameState gameState) {
+        latestGameState = gameState;
+        currentGif.addFrame(gameState);
+    }
+
+    private void startGame(Client client, Client client1, int boardSize, int rounds) {
+        currentGif = new GameGif(client.getId(), client1.getId(), boardSize, rounds);
+    }
+
+    List<GameGif> gifs = new ArrayList<>();
+    GameGif currentGif;
 }

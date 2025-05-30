@@ -7,6 +7,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.yaml.snakeyaml.util.Tuple;
 
+import java.awt.*;
+
 @Slf4j
 @Data
 public class GameState implements Cloneable {
@@ -41,7 +43,7 @@ public class GameState implements Cloneable {
 
     public int countScores(int kind) {
         int count = 0;
-        for (int i = 0; i < width; i ++) {
+        for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 if (getEdge(i, j, Edge.Center) == kind) count++;
             }
@@ -65,6 +67,45 @@ public class GameState implements Cloneable {
         }
         json.put("level", levelJson);
         return json.toString();
+    }
+
+    public void draw(Graphics graphics) {
+        int cellSize = 360/width;
+        for (int i = 0; i < width; i++) {
+            for (int j = 0; j < height; j++) {
+                int v = getEdge(i, j, Edge.Center);
+                setColor(graphics, v);
+                graphics.fillRect(i * cellSize, j * cellSize + 40, cellSize, cellSize);
+
+                v = getEdge(i, j, Edge.Left);
+                setColor(graphics, v);
+                graphics.drawLine(i * cellSize, j * cellSize + 40, i * cellSize + cellSize, j * cellSize + 40);
+                v = getEdge(i, j, Edge.Right);
+                setColor(graphics, v);
+                graphics.drawLine(i * cellSize + cellSize, j * cellSize + 40, i * cellSize + cellSize, j * cellSize + cellSize + 40);
+                v = getEdge(i, j, Edge.Top);
+                setColor(graphics, v);
+                graphics.drawLine(i * cellSize, j * cellSize + 40, i * cellSize, j * cellSize + cellSize + 40);
+                v = getEdge(i, j, Edge.Bottom);
+                setColor(graphics, v);
+                graphics.drawLine(i * cellSize, j * cellSize + cellSize + 40, i * cellSize + cellSize, j * cellSize + cellSize + 40);
+            }
+        }
+    }
+
+    private void setColor(Graphics graphics, int v) {
+        switch (v) {
+            case -1:
+                graphics.setColor(Color.LIGHT_GRAY);
+                break;
+            case 0:
+                graphics.setColor(Color.RED);
+                break;
+            case 1:
+                graphics.setColor(Color.GREEN);
+                break;
+        }
+
     }
 
     public enum Edge {
@@ -189,17 +230,17 @@ public class GameState implements Cloneable {
         }
     }
 
-    boolean fill(){
+    boolean fill() {
         boolean result = false;
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
-                result |= fillAt(i,j);
+                result |= fillAt(i, j);
             }
         }
         return result;
     }
 
-    private boolean fillAt(int x, int y){
+    private boolean fillAt(int x, int y) {
         if (getEdge(x, y, Edge.Center) != -1) return false;
         if (getEdge(x, y, Edge.Left) == -1) return false;
         if (getEdge(x, y, Edge.Right) == -1) return false;
@@ -228,7 +269,7 @@ public class GameState implements Cloneable {
                 sb.append(getEdge(i, j, Edge.Bottom));
                 sb.append("\">");
                 if (v != -1) {
-                    sb.append(v+1);
+                    sb.append(v + 1);
                 } else {
                     sb.append("&nbsp;");
                 }

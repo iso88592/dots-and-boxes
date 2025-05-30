@@ -63,9 +63,10 @@
         </section>
         <section class="col-9" id="game-state">
             <h2>Game state</h2>
-            <div id="arena" th:if="${gameState != null}" th:utext="${gameState.toHtml()}"></div>
-            <div id="arena" th:if="${gameState == null}">
-                <h3>Game is not started yet</h3>
+            <div id="gifs">
+                <div >
+                    <img th:each="gif : ${gifs}" th:src="@{'/gifs/' + ${gif}}" th:alt="${gif}">
+                </div>
             </div>
         </section>
         <section class="col-3" id="participants">
@@ -87,11 +88,10 @@
                         <td th:text="${client.getNames()}"></td>
                         <td th:text="${client.getScore()}"></td>
                     </tr>
-                    <tr>
-                        <td colspan="3" class="text-center">Wanna join? Click <a id="join" class="" th:href="@{/join}">here!</a></td>
-                    </tr>
                 </tbody>
             </table>
+            Wanna join? Click <a id="join" class="" th:href="@{/join}">here!</a>
+
         </section>
     </div>
 </main>
@@ -104,10 +104,10 @@
         const doc = parser.parseFromString(data, 'text/html');
         const participants = document.getElementById('participants');
         participants.innerHTML = doc.getElementById('participants').innerHTML;
-        const arena = document.getElementById('arena');
-        arena.innerHTML = doc.getElementById('arena').innerHTML;
+        const gifs = document.getElementById('gifs');
+        gifs.innerHTML = doc.getElementById('gifs').innerHTML;
     }
-    setInterval(updateClientList, 300);
+    setInterval(updateClientList, 1000);
 </script>
 </body>
 </html>
