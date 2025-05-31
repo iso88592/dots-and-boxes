@@ -7,7 +7,7 @@ import java.util.List;
 
 @Service
 public interface TournamentService {
-    void startTournament(List<Client> clients);
+    void startTournament(List<Client> clients, Client client);
 
     GameState getLatestGameState();
 

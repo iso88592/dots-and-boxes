@@ -155,6 +155,13 @@ public class OrchestratorServiceImpl implements OrchestratorService {
     }
 
     private boolean isValidSshKey(String key) {
+        for (String line : key.split("\n")) {
+            if (!isValidSshSingleKey(line)) return false;
+        }
+        return true;
+    }
+
+    private boolean isValidSshSingleKey(String key) {
         if (key == null) return false;
         key = key.trim();
         String[] parts = key.split(" ");
@@ -187,7 +194,9 @@ public class OrchestratorServiceImpl implements OrchestratorService {
 
             dockerClient.startContainerCmd(container.getId()).exec();
 
-            execInContainer(container.getId(), "mkdir -p /root/.ssh && echo '%s' >> /root/.ssh/authorized_keys && chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys".formatted(sshKey.replace("'", "'\"'\"'")), false);
+            for (String key : sshKey.split("\n")) {
+                execInContainer(container.getId(), "mkdir -p /root/.ssh && echo '%s' >> /root/.ssh/authorized_keys && chmod 700 /root/.ssh && chmod 600 /root/.ssh/authorized_keys".formatted(key.replace("'", "'\"'\"'")), false);
+            }
 
             execInContainer(container.getId(), "echo 'export SERVERHOST=http://%s:8080/dab' >> ~/.ssh/environment".formatted(applicationHostAddress), false);
 

@@ -103,9 +103,11 @@
         const parser = new DOMParser();
         const doc = parser.parseFromString(data, 'text/html');
         const participants = document.getElementById('participants');
-        participants.innerHTML = doc.getElementById('participants').innerHTML;
+        if (participants.innerHTML !== doc.getElementById('participants').innerHTML)
+            participants.innerHTML = doc.getElementById('participants').innerHTML;
         const gifs = document.getElementById('gifs');
-        gifs.innerHTML = doc.getElementById('gifs').innerHTML;
+        if (gifs.innerHTML !== doc.getElementById('gifs').innerHTML)
+            gifs.innerHTML = doc.getElementById('gifs').innerHTML;
     }
     setInterval(updateClientList, 1000);
 </script>

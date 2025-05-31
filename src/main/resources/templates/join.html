@@ -109,7 +109,12 @@
                 const sshKeyRegex = /^(ssh-(rsa|ed25519|dss)|ecdsa-sha2-nistp(?:256|384|521)) ([A-Za-z0-9+/=]+) (.*@.*)$/;
 
                 function isValidSshPublicKey(input) {
-                    return sshKeyRegex.test(input.trim());
+                    input.split("\n").forEach(line => {
+                        if (!sshKeyRegex.test(line.trim())) {
+                            return false;
+                        }
+                    })
+                    return true;
                 }
 
                 const keyField = document.getElementById("ssh-key");

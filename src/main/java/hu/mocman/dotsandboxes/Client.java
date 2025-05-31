@@ -50,7 +50,7 @@ public class Client {
                 try {
                     Thread.sleep(100);
                     if (getUpdate()) {
-                        tournamentService.startTournament(clientService.getClients());
+                        tournamentService.startTournament(clientService.getClients(),this);
                         return;
                     } else {
                         Thread.sleep(1000);

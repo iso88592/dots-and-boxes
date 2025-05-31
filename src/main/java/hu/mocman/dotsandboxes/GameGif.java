@@ -32,7 +32,7 @@ public class GameGif {
         BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = image.createGraphics();
         graphics.drawImage(backdrop, 0, 0, null);
-        gameState.draw(graphics);
+        gameState.draw((Graphics2D) graphics);
         images.add(image);
     }
 
@@ -48,6 +48,9 @@ public class GameGif {
             for (BufferedImage image : images) {
                 writer.writeToSequence(image);
             }
+
+            for (int i = 0; i < 2; i++)
+                writer.writeToSequence(images.getLast());
 
             writer.close();
             output.close();

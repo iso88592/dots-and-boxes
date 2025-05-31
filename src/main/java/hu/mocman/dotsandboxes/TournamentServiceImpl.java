@@ -25,8 +25,8 @@ public class TournamentServiceImpl implements TournamentService {
     }
 
     @Override
-    public void startTournament(List<Client> clients) {
-        createPairs(clients);
+    public void startTournament(List<Client> clients, Client client) {
+        createPairs(clients, client);
     }
 
     @Override
@@ -54,17 +54,19 @@ public class TournamentServiceImpl implements TournamentService {
         return result;
     }
 
-    private void createPairs(List<Client> clients) {
-        for (int i = 0; i < clients.size(); i++) {
-            for (int j = 0; j < clients.size(); j++) {
-                if (i == j) continue;
-                if (!clients.get(i).ready) continue;
-                if (!clients.get(j).ready) continue;
-                if (roundPairs.contains(new Tuple<>(clients.get(i), clients.get(j)))) continue;
-                if (roundPairs.contains(new Tuple<>(clients.get(j), clients.get(i)))) continue;
-                log.info("Adding pair {} and {}", clients.get(i), clients.get(j));
-                roundPairs.add(new Tuple<>(clients.get(i), clients.get(j)));
-            }
+    private void createPairs(List<Client> clients, Client client) {
+        int i = 0;
+        for (; i < clients.size(); i++) {
+            if (clients.get(i).getAddress().equals(client.getAddress())) break;
+        }
+        for (int j = 0; j < clients.size(); j++) {
+            if (i == j) continue;
+            if (!clients.get(i).ready) continue;
+            if (!clients.get(j).ready) continue;
+            if (roundPairs.contains(new Tuple<>(clients.get(i), clients.get(j)))) continue;
+            if (roundPairs.contains(new Tuple<>(clients.get(j), clients.get(i)))) continue;
+            log.info("Adding pair {} and {}", clients.get(i), clients.get(j));
+            roundPairs.add(new Tuple<>(clients.get(i), clients.get(j)));
         }
     }
 
@@ -106,7 +108,7 @@ public class TournamentServiceImpl implements TournamentService {
         boolean isRedTurn = true;
 
         Client[] clients = new Client[2];
-        int scores[] = {0,0};
+        int scores[] = {0, 0};
 
         for (int boardSize = 3; boardSize <= 11; boardSize += 4) {
             for (int rounds = 0; rounds < 3; rounds++) {
@@ -123,8 +125,8 @@ public class TournamentServiceImpl implements TournamentService {
                 }
 
                 GameState gameState = GameState.NewGame(boardSize);
-                int[] strokes = {0,0};
-                startGame(clients[0], clients[1], boardSize, rounds+1);
+                int[] strokes = {0, 0};
+                startGame(clients[0], clients[1], boardSize, rounds + 1);
 
                 while (!gameState.isGameOver()) {
                     Client currentPlayer = isRedTurn ? clients[0] : clients[1];
@@ -155,7 +157,7 @@ public class TournamentServiceImpl implements TournamentService {
                     } else {
                         scores[p2idx]++;
                     }
-                } else{
+                } else {
                     // do not update scores?
                 }
                 finalizeGame();

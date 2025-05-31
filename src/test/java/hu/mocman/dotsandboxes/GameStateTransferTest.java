@@ -87,4 +87,52 @@ public class GameStateTransferTest {
 
     }
 
+    @Test
+    public void testMultiFill() {
+        GameState testState = GameState.NewGame(3);
+
+        Assertions.assertThat(testState.getEdge(0,0, GameState.Edge.Center)).isEqualTo(-1);
+        Assertions.assertThat(testState.getEdge(1,0, GameState.Edge.Center)).isEqualTo(-1);
+
+        testState.setEdge(0,0, GameState.Edge.Left);
+        testState.setEdge(0,0, GameState.Edge.Right);
+        testState.setEdge(0,0, GameState.Edge.Top);
+        testState.setEdge(0,0, GameState.Edge.Bottom);
+        testState.setEdge(1,0, GameState.Edge.Right);
+        testState.setEdge(1,0, GameState.Edge.Top);
+        testState.setEdge(1,0, GameState.Edge.Bottom);
+        testState.fill();
+
+        Assertions.assertThat(testState.getEdge(0,0, GameState.Edge.Center)).isEqualTo(0);
+        Assertions.assertThat(testState.getEdge(1,0, GameState.Edge.Center)).isEqualTo(0);
+        Assertions.assertThat(testState.countScores(0)).isEqualTo(2);
+
+
+        testState.setEdge(2,0, GameState.Edge.Right);
+        testState.setEdge(2,0, GameState.Edge.Top);
+        testState.setEdge(2,0, GameState.Edge.Bottom);
+
+        testState.setEdge(0,1, GameState.Edge.Left);
+        testState.setEdge(0,1, GameState.Edge.Right);
+        testState.setEdge(0,1, GameState.Edge.Bottom);
+
+        testState.setEdge(1,1, GameState.Edge.Right);
+        testState.setEdge(1,1, GameState.Edge.Bottom);
+
+        testState.setEdge(2,1, GameState.Edge.Right);
+        testState.setEdge(2,1, GameState.Edge.Bottom);
+
+        testState.setEdge(0,2, GameState.Edge.Left);
+        testState.setEdge(0,2, GameState.Edge.Right);
+        testState.setEdge(0,2, GameState.Edge.Bottom);
+
+        testState.setEdge(1,2, GameState.Edge.Right);
+        testState.setEdge(1,2, GameState.Edge.Bottom);
+
+        testState.setEdge(2,2, GameState.Edge.Right);
+        testState.setEdge(2,2, GameState.Edge.Bottom);
+
+        testState.fill();
+        Assertions.assertThat(testState.countScores(0)).isEqualTo(9);
+    }
 }

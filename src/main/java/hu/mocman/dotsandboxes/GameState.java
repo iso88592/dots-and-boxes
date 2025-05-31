@@ -69,43 +69,47 @@ public class GameState implements Cloneable {
         return json.toString();
     }
 
-    public void draw(Graphics graphics) {
-        int cellSize = 360/width;
+    public void draw(Graphics2D graphics) {
+        graphics.setStroke(new BasicStroke(3));
+        int cellSize = 350 / width;
         for (int i = 0; i < width; i++) {
             for (int j = 0; j < height; j++) {
                 int v = getEdge(i, j, Edge.Center);
-                setColor(graphics, v);
-                graphics.fillRect(i * cellSize, j * cellSize + 40, cellSize, cellSize);
+                setColor(graphics, v, true);
+                graphics.fillRect(i * cellSize + 1, j * cellSize + 41, cellSize - 2, cellSize - 2);
 
                 v = getEdge(i, j, Edge.Left);
-                setColor(graphics, v);
-                graphics.drawLine(i * cellSize, j * cellSize + 40, i * cellSize + cellSize, j * cellSize + 40);
-                v = getEdge(i, j, Edge.Right);
-                setColor(graphics, v);
-                graphics.drawLine(i * cellSize + cellSize, j * cellSize + 40, i * cellSize + cellSize, j * cellSize + cellSize + 40);
+                setColor(graphics, v, false);
+                graphics.drawLine(i * cellSize, j * cellSize + 41, i * cellSize, (j + 1) * cellSize + 39);
+                if (i == width - 1) {
+                    v = getEdge(i, j, Edge.Right);
+                    setColor(graphics, v, false);
+                    graphics.drawLine((i + 1) * cellSize, j * cellSize + 41, (i + 1) * cellSize, (j + 1) * cellSize + 39);
+                }
                 v = getEdge(i, j, Edge.Top);
-                setColor(graphics, v);
-                graphics.drawLine(i * cellSize, j * cellSize + 40, i * cellSize, j * cellSize + cellSize + 40);
-                v = getEdge(i, j, Edge.Bottom);
-                setColor(graphics, v);
-                graphics.drawLine(i * cellSize, j * cellSize + cellSize + 40, i * cellSize + cellSize, j * cellSize + cellSize + 40);
+                setColor(graphics, v, false);
+                graphics.drawLine(i * cellSize + 1, j * cellSize + 40, (i + 1) * cellSize - 1, j * cellSize + 40);
+                if (j == height - 1) {
+                    v = getEdge(i, j, Edge.Bottom);
+                    setColor(graphics, v, false);
+                    graphics.drawLine(i * cellSize + 1, (j + 1) * cellSize + 40, (i + 1) * cellSize - 1, (j + 1) * cellSize + 40);
+                }
             }
         }
     }
 
-    private void setColor(Graphics graphics, int v) {
+    private void setColor(Graphics graphics, int v, boolean dark) {
+        Color color = Color.LIGHT_GRAY;
         switch (v) {
-            case -1:
-                graphics.setColor(Color.LIGHT_GRAY);
-                break;
             case 0:
-                graphics.setColor(Color.RED);
+                color = Color.RED;
                 break;
             case 1:
-                graphics.setColor(Color.GREEN);
+                color = Color.GREEN;
                 break;
         }
-
+        if (dark) color = color.darker();
+        graphics.setColor(color);
     }
 
     public enum Edge {

@@ -22,8 +22,6 @@ public class Dab {
     public String register(HttpServletRequest request, @RequestParam String id) {
         clientService.register(request, id);
         log.info("Client updated. Starting tournament.");
-        tournamentService.startTournament(clientService.getClients());
-
         return "{\"result\": \"ok\"}";
     }
 
