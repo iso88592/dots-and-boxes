@@ -50,7 +50,7 @@ public class Client {
                 try {
                     Thread.sleep(100);
                     if (getUpdate()) {
-                        tournamentService.startTournament(clientService.getClients(),this);
+                        tournamentService.startTournament(clientService.getClients(), this);
                         return;
                     } else {
                         Thread.sleep(1000);
@@ -98,15 +98,17 @@ public class Client {
         return false;
     }
 
-    public GameState turn(GameState fromState) {
+    private GameState getNextTurn(GameState state) {
         try {
-
-            URL url = new URL("http://" + address + ":5000/turn?state=" + URLEncoder.encode(fromState.convertStateToJson(), StandardCharsets.UTF_8));
+            URL url = new URL("http://" + address + ":5000/turn?state=" + URLEncoder.encode(state.convertStateToJson(), StandardCharsets.UTF_8));
             log.debug("Sending turn request to {}", url);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
+            connection.setConnectTimeout(1000 * 10);
             int status = connection.getResponseCode();
-            if (status != 200) return fromState;
+            if (status != 200) {
+                return null;
+            }
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
             String inputLine;
@@ -121,11 +123,38 @@ public class Client {
 
             return GameState.FromJson(response.toString());
         } catch (IOException | JSONException e) {
-            throw new InvalidArgumentException("Invalid state");
+
         }
+        return null;
+    }
+
+    public GameState turn(GameState fromState) {
+        final StateContainer stateContainer = new StateContainer();
+        for (int retries = 3; retries > 0; retries--) {
+            Thread turnThread = new Thread(() -> {
+                stateContainer.state = getNextTurn(fromState);
+            });
+            try {
+                turnThread.start();
+                turnThread.join(1000 * 10);
+            } catch (InterruptedException e) {
+                log.info(e.getMessage());
+            }
+            if (turnThread.isAlive()) {
+                turnThread.interrupt();
+                log.info("Client did not respond in 1 minute");
+            } else {
+                return stateContainer.state;
+            }
+        }
+        throw new InvalidArgumentException("Invalid state");
     }
 
     public void setScore(int score, String opponent) {
         scores.put(opponent, score);
+    }
+
+    private static class StateContainer {
+        public GameState state = null;
     }
 }

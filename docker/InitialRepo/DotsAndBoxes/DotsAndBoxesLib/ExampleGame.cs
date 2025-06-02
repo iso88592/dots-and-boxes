@@ -12,16 +12,12 @@ public class ExampleGame: IDotsAndBoxes
     
     public GameState Turn(GameState state)
     {
-        while (true)
-        {
-            // TODO: make the next step
-            GameState.Edge edge = (GameState.Edge)random.Next(4);
-            int x = random.Next(state.Width);
-            int y = random.Next(state.Height);
-            if (state.GetEdge(x, y, edge) != -1) continue;
-            state.SetEdge(x, y, edge);
-            return state;
-        }
+        // TODO: make the next step
+        GameState.Edge edge = (GameState.Edge)random.Next(4);
+        int x = random.Next(state.Width);
+        int y = random.Next(state.Height);
+        state.SetEdge(x, y, edge);
+        return state;
     }
 
     public string[] Names()

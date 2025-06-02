@@ -1,6 +1,7 @@
 package hu.mocman.dotsandboxes;
 
 import lombok.extern.slf4j.Slf4j;
+import org.openqa.selenium.InvalidArgumentException;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.util.Tuple;
 
@@ -110,7 +111,7 @@ public class TournamentServiceImpl implements TournamentService {
         Client[] clients = new Client[2];
         int scores[] = {0, 0};
 
-        for (int boardSize = 3; boardSize <= 11; boardSize += 4) {
+        for (int boardSize = 3; boardSize <= 7; boardSize += 2) {
             for (int rounds = 0; rounds < 3; rounds++) {
                 int p1idx = 0;
                 int p2idx = 1;
@@ -127,27 +128,32 @@ public class TournamentServiceImpl implements TournamentService {
                 GameState gameState = GameState.NewGame(boardSize);
                 int[] strokes = {0, 0};
                 startGame(clients[0], clients[1], boardSize, rounds + 1);
+                try {
 
-                while (!gameState.isGameOver()) {
-                    Client currentPlayer = isRedTurn ? clients[0] : clients[1];
-                    GameState newState = currentPlayer.turn(gameState.clone());
-                    if (gameState.isValidMove(newState)) {
-                        gameState = newState;
-                        if (!gameState.fill()) {
-                            gameState.nextPlayer();
-                        }
-                        snapshot(gameState);
-                        isRedTurn = !isRedTurn;
-                    } else {
-                        strokes[isRedTurn ? 0 : 1]++;
-                        log.info("Invalid move for {}: {}", currentPlayer, gameState);
-                        if (strokes[isRedTurn ? 0 : 1] >= 3) {
-                            log.info("Player {} has failed to make a valid move in 3 rounds", currentPlayer);
-                            scores[isRedTurn ? p2idx : p1idx]++;
-                            scores[isRedTurn ? p1idx : p2idx]--;
-                            break;
+                    while (!gameState.isGameOver()) {
+                        Client currentPlayer = isRedTurn ? clients[0] : clients[1];
+                        GameState newState = currentPlayer.turn(gameState.clone());
+                        if (gameState.isValidMove(newState)) {
+                            gameState = newState;
+                            if (!gameState.fill()) {
+                                gameState.nextPlayer();
+                            }
+                            snapshot(gameState);
+                            isRedTurn = !isRedTurn;
+                        } else {
+                            strokes[isRedTurn ? 0 : 1]++;
+                            log.info("Invalid move for {}: {}", currentPlayer, gameState);
+                            if (strokes[isRedTurn ? 0 : 1] >= 3) {
+                                log.info("Player {} has failed to make a valid move in 3 rounds", currentPlayer);
+                                scores[isRedTurn ? p2idx : p1idx]++;
+                                scores[isRedTurn ? p1idx : p2idx]--;
+                                break;
+                            }
                         }
                     }
+                }
+                catch (InvalidArgumentException e) {
+                    log.info("Invalid move for {}: {}", clients[isRedTurn ? 0 : 1], gameState);
                 }
                 if (gameState.isGameOver()) {
                     int p1 = gameState.countScores(0);
