@@ -32,11 +32,16 @@ public class GameGif {
         BufferedImage image = new BufferedImage(400, 400, BufferedImage.TYPE_INT_ARGB);
         Graphics graphics = image.createGraphics();
         graphics.drawImage(backdrop, 0, 0, null);
-        gameState.draw((Graphics2D) graphics);
+        if (gameState == null) {
+            graphics.drawString("There was an invalid move", 100, 150);
+        } else {
+            gameState.draw((Graphics2D) graphics);
+        }
         images.add(image);
     }
 
     public void finalizeGif() {
+        if (images.isEmpty()) { return; }
         try {
             BufferedImage first = images.get(0);
 

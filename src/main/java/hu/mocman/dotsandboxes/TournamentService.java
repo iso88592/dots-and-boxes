@@ -15,6 +15,16 @@ public interface TournamentService {
 
     List<String> getGifs();
 
+    void reset();
+
+    List<Tuple<Client,Client>> getPairs();
+
+    void disableProcessing();
+
+    void enableProcessing();
+
+    void processSingleMatch();
+
     interface TournamentEventListener {
         void onPairPopped(Tuple<Client, Client> pair);
 
