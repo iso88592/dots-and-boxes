@@ -199,7 +199,7 @@ public class TournamentServiceImpl implements TournamentService {
                             log.info("Invalid move for {}: {}, stoke {}", currentPlayer.getId(), gameState, strokes[isRedTurn ? 0 : 1]);
                             if (strokes[isRedTurn ? 0 : 1] >= 3) {
                                 log.info("Player {} has failed to make a valid move in 3 rounds", currentPlayer.getId());
-                                scores[isRedTurn ? p1idx : p2idx]--;
+                                scores[isRedTurn ? p2idx : p1idx]--;
                                 break;
                             }
                         }
@@ -215,9 +215,7 @@ public class TournamentServiceImpl implements TournamentService {
                     } else {
                         scores[p2idx]++;
                     }
-                } else {
-                    // do not update scores?
-                }
+                } 
                 finalizeGame();
             }
         }

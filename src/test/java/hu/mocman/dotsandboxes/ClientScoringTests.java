@@ -78,4 +78,92 @@ public class ClientScoringTests {
         Mockito.verify(clients.get(1)).setScore(captor.capture(), Mockito.any());
         Assertions.assertThat(captor.getValue()).isLessThan(0);
     }
+
+    GameState makeInvalidMove(GameState state) {
+        state.setEdge(1, 1, GameState.Edge.Center);
+        return state;
+    }
+
+    GameState makeRandomMove(GameState state) {
+        state.setEdge(1, 1, GameState.Edge.Center);
+        return state;
+    }
+
+    GameState makeNextValidMove(GameState state) {
+        for (int i = 0; i < state.getWidth(); i++) {
+            for (int j = 0; j < state.getHeight(); j++) {
+                if (state.getEdge(i,j, GameState.Edge.Left) == -1) {
+                    state.setEdge(i, j, GameState.Edge.Left);
+                    return state;
+                }
+                if (state.getEdge(i,j, GameState.Edge.Top) == -1) {
+                    state.setEdge(i, j, GameState.Edge.Top);
+                    return state;
+                }
+                if (state.getEdge(i,j, GameState.Edge.Right) == -1) {
+                    state.setEdge(i, j, GameState.Edge.Right);
+                    return state;
+                }
+                if (state.getEdge(i,j, GameState.Edge.Bottom) == -1) {
+                    state.setEdge(i, j, GameState.Edge.Bottom);
+                    return state;
+                }
+            }
+        }
+        Assertions.fail();
+        return state;
+    }
+
+
+    @Test
+    public void clientsThatMakeInvalidMovesHasNegativeScores() {
+        tournamentService.startTournament(clients, clients.get(0));
+
+        Mockito.when(clients.get(0).turn(Mockito.any())).thenAnswer(invocation -> makeInvalidMove(invocation.getArgument(0)));
+        Mockito.when(clients.get(1).turn(Mockito.any())).thenAnswer(invocation -> makeInvalidMove(invocation.getArgument(0)));
+
+        tournamentService.processSingleMatch();
+
+        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+        Mockito.verify(clients.get(0)).setScore(captor.capture(), Mockito.any());
+        Assertions.assertThat(captor.getValue()).isLessThan(0);
+
+        Mockito.verify(clients.get(1)).setScore(captor.capture(), Mockito.any());
+        Assertions.assertThat(captor.getValue()).isLessThan(0);
+    }
+
+    @Test
+    public void clientsThatMakeValidMovesHas9Or10ScoreInTotal() {
+        tournamentService.startTournament(clients, clients.get(0));
+
+        Mockito.when(clients.get(0).turn(Mockito.any())).thenAnswer(invocation -> makeNextValidMove(invocation.getArgument(0)));
+        Mockito.when(clients.get(1).turn(Mockito.any())).thenAnswer(invocation -> makeNextValidMove(invocation.getArgument(0)));
+
+        tournamentService.processSingleMatch();
+
+        int sum = 0;
+        for (int i =0; i < 2; i++) {
+            ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+            Mockito.verify(clients.get(i)).setScore(captor.capture(), Mockito.any());
+            sum += captor.getValue();
+        }
+        Assertions.assertThat(sum).isBetween(9, 10);
+    }
+
+    @Test
+    public void pairingValidAndInvalidClientsWillScoreZeroAndMinus9() {
+        tournamentService.startTournament(clients, clients.get(0));
+
+        Mockito.when(clients.get(0).turn(Mockito.any())).thenAnswer(invocation -> makeNextValidMove(invocation.getArgument(0)));
+        Mockito.when(clients.get(1).turn(Mockito.any())).thenAnswer(invocation -> makeInvalidMove(invocation.getArgument(0)));
+
+        tournamentService.processSingleMatch();
+        ArgumentCaptor<Integer> captor = ArgumentCaptor.forClass(Integer.class);
+        Mockito.verify(clients.get(0)).setScore(captor.capture(), Mockito.any());
+        Assertions.assertThat(captor.getValue()).isEqualTo(0);
+
+        Mockito.verify(clients.get(1)).setScore(captor.capture(), Mockito.any());
+        Assertions.assertThat(captor.getValue()).isEqualTo(-9);
+
+    }
 }
