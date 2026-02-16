@@ -68,3 +68,63 @@ The server is a Spring Boot app. The interesting bits:
 The C# client template lives in `DotsAndBoxesClient/` and `docker/InitialRepo/`. Bots implement `IDotsAndBoxes` from the provided library. If you have multiple implementations, only the first one alphabetically will compete.
 You can infer the necessary API calls from the C# application, so you can submit your own implementation in other languages. Just don't forget to update the git hook.
 
+## Networking
+
+This is the part that will save you an hour of head-scratching. The setup assumes a LAN workshop where participants connect to a shared network and the server host runs Docker containers on their behalf. There are three networks in play, and traffic needs to flow between all of them.
+
+### The three networks
+
+1. **Host WiFi/LAN** (`hostif`) - the network your server machine is on. Participants connect here to reach the dashboard.
+2. **Point-to-point link** (`p2pif`) - a direct link between your router and the server. This could be a wired ethernet interface. Participants' traffic arrives through this.
+3. **Docker bridge** (`bridge`) - created automatically by the server on first startup as `dots_and_boxes_bridge`. All bot containers live here. The server talks to containers through the bridge gateway IP.
+
+### Why it doesn't just work
+
+Docker's default network isolation blocks external traffic from reaching containers. Participants need to SSH into their containers to push code, and the containers need to reach the Spring Boot server on port 8080. Out of the box, Docker's `DOCKER-USER` iptables chain drops forwarded packets from outside interfaces into the bridge network.
+
+On top of that, containers need internet access to restore NuGet packages when building the .NET bot. Without masquerading on the host interface, outbound traffic from the bridge has no return path.
+
+### What routing.sh does
+
+Run it as root with three arguments:
+
+```bash
+sudo bash routing.sh <host interface> <p2p interface> <docker bridge>
+```
+
+For example:
+
+```bash
+sudo bash routing.sh wlp0s20f3 enp1s0 br-c372a625f75d
+```
+
+You can find the bridge interface name in the server logs on startup. The `OrchestratorService` logs the network interface name and gateway IP when it creates or finds the bridge.
+
+The script does three things:
+
+1. Sets the default FORWARD policy to ACCEPT, so the kernel doesn't drop packets moving between interfaces.
+2. Adds an nftables masquerade rule on the host interface, so containers can reach the internet through the host's outbound connection.
+3. Adds an iptables rule to `DOCKER-USER` allowing traffic from the P2P interface into the Docker bridge, so participants can SSH into their containers.
+
+### A typical setup
+
+```
+[Participants' laptops]
+        |
+    [WiFi / Router]
+        |
+    (p2p interface, e.g. enp1s0)
+        |
+    [Server machine] --- (host interface, e.g. wlp0s20f3) --- [Internet]
+        |
+    (docker bridge, e.g. br-c372a625f75d)
+        |
+    [Bot containers on 172.x.x.x]
+```
+
+Participants access the dashboard on the server's LAN IP. When they SSH to push code, traffic goes from the P2P interface through the bridge to their container. When a container registers with the server, it hits the bridge gateway IP on port 8080, which is the server itself.
+
+## API docs
+
+Swagger UI is available at `/swagger-ui.html` when the server is running. The raw OpenAPI spec is at `/v3/api-docs`.
+

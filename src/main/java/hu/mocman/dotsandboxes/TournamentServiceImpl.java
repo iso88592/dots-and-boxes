@@ -215,7 +215,7 @@ public class TournamentServiceImpl implements TournamentService {
                     } else {
                         scores[p2idx]++;
                     }
-                } 
+                }
                 finalizeGame();
             }
         }
