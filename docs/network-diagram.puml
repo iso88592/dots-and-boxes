@@ -1,0 +1,35 @@
+@startuml
+skinparam backgroundColor transparent
+skinparam defaultFontName monospaced
+skinparam rectangle {
+    RoundCorner 10
+}
+
+rectangle "Participants' laptops" as laptops
+rectangle "WiFi / Router" as router
+rectangle "Server machine" as server
+cloud "Internet" as internet
+
+frame "Docker bridge (172.x.x.x)" as bridge {
+    rectangle "Bot container 1" as bot1
+    rectangle "Bot container 2" as bot2
+    rectangle "Bot container N" as botN
+}
+
+laptops -down-> router : ""
+router -down-> server : p2p interface\n(e.g. enp1s0)
+server -down-> bridge : bridge interface\n(e.g. br-c372a625f75d)
+server -right-> internet : host interface\n(e.g. wlp0s20f3)
+
+note right of bridge
+  Containers reach the server
+  via bridge gateway IP on :8080
+end note
+
+note left of router
+  Participants access the
+  dashboard and SSH into
+  their containers through
+  the P2P link
+end note
+@enduml

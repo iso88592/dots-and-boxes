@@ -108,19 +108,9 @@ The script does three things:
 
 ### A typical setup
 
-```
-[Participants' laptops]
-        |
-    [WiFi / Router]
-        |
-    (p2p interface, e.g. enp1s0)
-        |
-    [Server machine] --- (host interface, e.g. wlp0s20f3) --- [Internet]
-        |
-    (docker bridge, e.g. br-c372a625f75d)
-        |
-    [Bot containers on 172.x.x.x]
-```
+![Network diagram](https://www.plantuml.com/plantuml/svg/VPDFRzim3CNl-XGFkQmv97DST2boA8frADPB42o7NNPX9DeMub06fJGRXdttmVyQ0mKANsZnnqSzIdgCYJITJxM9HoyDAPrm87iiDPp5FOKwA9AIn8QK9KqenmMTw_GS96tfn3W52R4Xosu2ATj4KjQClmO0VlIgAgnOPUQVCLTYjYDDtlg69CLFgAb9eOapK1pZAVpJFtjyRWKJQmTf5qwPFUihAqvaAo_SGR5RChOEPuVPYoHMuTIb_F1ZJA6jeTctO8-iEAXt9UDcjSwNlzjltk73SkzhqlHhIB114ldEPC-6jFgOoqSk_vZRZjos7Tum5onSkCZYOHW1DfZDp12FgTuuDcZofhTQaELVSiFBSWcMPXMpkHceiMZmk1c3TtK7NTZRTKvVyhjYVUUk0khBAYqUteQA3QeGqtk5IzraCS-Asxan4XAZgqGeXfu6U1hTHoYJhP0g7WyIUFKqRg-an1VwWvSTWc1pdzrdXiMXrHtKQouwyU6o0DDB1xAMOspr3U0eLeT0wa3YiDz_RpSV3Dgqr-kPjBo6SrdrAUpo7MelnslhHnRNFh7_)
+
+The [PlantUML source](docs/network-diagram.puml) is in the repo if you need to modify it.
 
 Participants access the dashboard on the server's LAN IP. When they SSH to push code, traffic goes from the P2P interface through the bridge to their container. When a container registers with the server, it hits the bridge gateway IP on port 8080, which is the server itself.
 
